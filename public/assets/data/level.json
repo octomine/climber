@@ -1,0 +1,6 @@
+{
+  "platforms": [
+    { "image": "tile", "x": 100, "y": 500 },
+    { "image": "tile", "x": 200, "y": 500 }
+  ]
+}

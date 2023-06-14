@@ -11,7 +11,8 @@ const cfg = {
     scene: [MyScene],
     physics: {
         default: 'arcade',
-        rcade: {
+        arcade: {
+            gravity: { y: 0 },
             debug: true,
         }
     }
