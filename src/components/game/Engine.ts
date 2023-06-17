@@ -12,7 +12,7 @@ const cfg = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 0 },
+            gravity: { y: 400 },
             debug: true,
         }
     }
