@@ -2,7 +2,7 @@ export class MyScene extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
   private actor!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
-  private actorController!: object;
+  private handlers!: Phaser.Physics.Arcade.Group;
 
   constructor() {
     super('main');
@@ -10,6 +10,7 @@ export class MyScene extends Phaser.Scene {
 
   preload() {
     this.load.image('tile', 'assets/image/tile.png');
+    this.load.image('handler', 'assets/image/handler.png')
     this.load.image('penta', 'assets/image/img.png');
   }
 
@@ -28,6 +29,11 @@ export class MyScene extends Phaser.Scene {
     const layer = this.map.createLayer(0, 'tile', 0, 0);
 
     this.map.setCollision(0);
+
+    this.handlers = this.physics.add.group({
+      key: 'handler',
+      setXY: { x: 200, y: 300 },
+    })
 
     // actor
     this.actor = this.physics.add.sprite(200, 100, 'penta');
