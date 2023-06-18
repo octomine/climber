@@ -1,9 +1,15 @@
 export class MyScene extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
+
   private actor!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
+  private leftGrabber!: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  private rightGrabber!: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
+  private grabberOffset: number = 0;
+
   private handlers!: Phaser.Physics.Arcade.Group;
   private hanging: boolean = false;
+  private grabbed!: { x: number, y: number };
 
   constructor() {
     super('main');
@@ -42,6 +48,14 @@ export class MyScene extends Phaser.Scene {
 
     // actor
     this.actor = this.physics.add.sprite(200, 100, 'penta');
+    this.grabberOffset = this.actor.width / 3;
+
+    this.leftGrabber = this.physics.add.image(0, 0, '');
+    this.leftGrabber.body.setCircle(20);
+    this.leftGrabber.body.setAllowGravity(false);
+    this.rightGrabber = this.physics.add.image(0, 0, '');
+    this.rightGrabber.body.setCircle(20);
+    this.rightGrabber.body.setAllowGravity(false);
 
     if (layer) {
       this.physics.add.collider(this.actor, layer);
@@ -49,13 +63,19 @@ export class MyScene extends Phaser.Scene {
 
     this.cursors = this.input.keyboard?.createCursorKeys();
 
+    // KEYBOARD
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
       if (e.code === 'Space') {
-        this.physics.overlap(this.actor, this.handlers, (actor, handler) => {
-          const { x, y } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
-          this.actor.x = x;
-          this.actor.y = y;
+        this.physics.overlap(this.leftGrabber, this.handlers, (grabber, handler) => {
+          const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
+          const { x: grabberX, y: grabberY } = (grabber as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
+          const originX = ((this.actor.width / 2) - (this.actor.x - grabberX)) / this.actor.width;
+          const originY = ((this.actor.height / 2) - (this.actor.y - grabberY)) / this.actor.height;
+          // this.actor.setOrigin(originX, originY);
+          this.actor.x = handlerX;
+          this.actor.y = handlerY;
           this.actor.setVelocity(0);
+          this.grabbed = { x: handlerX, y: handlerY };
           this.hanging = true;
         })
       }
@@ -77,13 +97,19 @@ export class MyScene extends Phaser.Scene {
         }
         this.hanging = false;
       }
-    })
+    });
+
+    const test = this.physics.
   }
 
   update() {
     if (this.hanging) {
       // hanging
+      this.actor.setPosition(this.grabbed.x, this.grabbed.y);
       this.actor.setVelocityY(0);
+      this.actor.setRotation(1)
+      // this.actor.angle++;
+      this.actor.refreshBody();
     } else {
       // jump
       if (this.cursors?.up.isDown) {
@@ -103,5 +129,12 @@ export class MyScene extends Phaser.Scene {
         }
       }
     }
+
+    // TODO: допилить вращение
+    const v = this.actor.body.velocity;
+    this.leftGrabber.setPosition(this.actor.x - this.grabberOffset, this.actor.y);
+    this.leftGrabber.body.velocity.copy(v);
+    this.rightGrabber.setPosition(this.actor.x + this.grabberOffset, this.actor.y);
+    this.rightGrabber.body.velocity.copy(v);
   }
 }
