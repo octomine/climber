@@ -1,4 +1,4 @@
-import { BodyType, ConstraintType } from "matter";
+import { BodyType, ConstraintType, Vector } from "matter";
 
 export class MyScene extends Phaser.Scene {
   private MP!: Phaser.Physics.Matter.MatterPhysics;
@@ -6,10 +6,15 @@ export class MyScene extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
 
+  private offsetX = 40;
+  private offsetY = 0;
+
   private actor!: Phaser.Physics.Matter.Sprite;
   private grabberLeft!: BodyType;
   private grabberRight!: BodyType;
-  private cstr!: ConstraintType;
+  private rotationPoint!: Phaser.Math.Vector2;
+  private rotationDirection!: number;
+  private lastDown!: string;
 
   private handlers!: Phaser.Physics.Arcade.Group;
   private hanging: boolean = false;
@@ -50,18 +55,15 @@ export class MyScene extends Phaser.Scene {
     const { bodies, body } = this.MP;
     const x = 45;
     const y = 44;
-    const offsetX = 40;
-    const offsetY = 20;
 
     const mainBody = bodies.circle(x, y, 30);
-    this.grabberLeft = bodies.circle(x - offsetX, y - offsetY, 10, { mass: .01 });
-    this.grabberRight = bodies.circle(x + offsetX, y - offsetY, 10, { mass: .01 });
+    this.grabberLeft = bodies.circle(x - this.offsetX, y - this.offsetY, 10, { mass: .01 });
+    this.grabberRight = bodies.circle(x + this.offsetX, y - this.offsetY, 10, { mass: .01 });
     const finalBody = body.create({ parts: [mainBody, this.grabberLeft, this.grabberRight] });
     this.actor = this.matter.add.sprite(0, 0, 'penta');
     this.actor.setExistingBody(finalBody);
     this.actor.setFixedRotation().setPosition(200, 100);
 
-    this.cstr = this.matter.add.constraint(this.grabberLeft, this.grabberRight, 50, 1);
     // this.handlers = this.physics.add.group({
     //   key: 'handler',
     //   quantity: 2,
@@ -86,12 +88,21 @@ export class MyScene extends Phaser.Scene {
     //   this.physics.add.collider(this.actor, layer);
     // }
 
-    this.cursors = this.input.keyboard?.createCursorKeys();
+    // this.cursors = this.input.keyboard?.createCursorKeys();
 
     // // KEYBOARD
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-
+      const { code, repeat } = e;
+      if (!repeat && ['ArrowRight', 'ArrowLeft'].includes(code)) {
+        const grabber = code === 'ArrowRight' ? this.grabberRight : this.grabberLeft;
+        const { x, y } = grabber.position;
+        this.rotationPoint = new Phaser.Math.Vector2(x, y);
+        this.rotationDirection = code == 'ArrowRight' ? 1 : -1;
+        // if (code === 'ArrowRight') {
+        //   this.actor.rotation += Math.PI * (this.lastDown === 'ArrowLeft' ? -1 : 1);
+        // }
+        this.hanging = true;
+        this.lastDown = code;
         //     this.physics.overlap(this.leftGrabber, this.handlers, (grabber, handler) => {
         //       const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
         //       const { x: grabberX, y: grabberY } = (grabber as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
@@ -107,55 +118,61 @@ export class MyScene extends Phaser.Scene {
       }
     });
 
-    // this.input.keyboard?.on('keyup', (e: KeyboardEvent) => {
-    //   const { code } = e;
-    //   if (code === 'Space') {
-    //     if (this.hanging) {
-    //       if (this.cursors?.up.isDown) {
-    //         this.actor.setVelocityY(-300);
-    //       }
-    //       if (this.cursors?.right.isDown) {
-    //         this.actor.setVelocityX(100);
-    //       }
-    //       if (this.cursors?.left.isDown) {
-    //         this.actor.setVelocityX(-100);
-    //       }
-    //     }
-    //     this.hanging = false;
-    //   }
-    // });
+    this.input.keyboard?.on('keyup', (e: KeyboardEvent) => {
+      const { code } = e;
+      if (this.lastDown === code && ['ArrowRight', 'ArrowLeft'].includes(code)) {
+        //     if (this.hanging) {
+        //       if (this.cursors?.up.isDown) {
+        //         this.actor.setVelocityY(-300);
+        //       }
+        //       if (this.cursors?.right.isDown) {
+        //         this.actor.setVelocityX(100);
+        //       }
+        //       if (this.cursors?.left.isDown) {
+        //         this.actor.setVelocityX(-100);
+        //       }
+        //     }
+        this.hanging = false;
+      }
+    });
 
   }
 
   update() {
-    // if (this.hanging) {
-    //   // hanging
-    //   this.actor.setPosition(this.grabbed.x, this.grabbed.y);
-    //   this.actor.setVelocityY(0);
-    //   this.actor.setRotation(1)
-    //   // this.actor.angle++;
-    //   this.actor.refreshBody();
-    // } else {
+    if (this.hanging) {
+      this.actor.rotation += .1 * this.rotationDirection;
+      const r = Math.sqrt(Math.pow(this.offsetX, 2) + Math.pow(this.offsetY, 2));
+      const { x, y } = this.rotationPoint;
+      const newX = x - r * Math.cos(this.actor.rotation) * this.rotationDirection;
+      const newY = y - r * Math.sin(this.actor.rotation) * this.rotationDirection;
+      this.actor.setPosition(newX, newY);
+      // hanging
+      //   this.actor.setPosition(this.grabbed.x, this.grabbed.y);
+      //   this.actor.setVelocityY(0);
+      //   this.actor.setRotation(1)
+      //   // this.actor.angle++;
+      //   this.actor.refreshBody();
+    } //else {
     //   // jump
-    if (this.cursors?.up.isDown) {
-      // if (this.actor.body.onFloor()) {
-      this.actor.setVelocityY(-3);
-      // }
-    }
+    // if (this.cursors?.up.isDown) {
+    //   // if (this.actor.body.onFloor()) {
+    //   this.actor.setVelocityY(-3);
+    //   // }
+    // }
 
     //   // walk
     //   if (this.actor.body.onFloor()) {
-    if (this.cursors?.right.isDown) {
-      this.actor.setVelocityX(1);
-    } else if (this.cursors?.left.isDown) {
-      this.actor.setVelocityX(-1);
-    } else {
-      this.actor.setVelocityX(0);
-    }
+    // if (this.cursors?.right.isDown) {
+    //   this.actor.setVelocityX(1);
+    // } else if (this.cursors?.left.isDown) {
+    //   this.actor.setVelocityX(-1);
+    // } else {
+    //   this.actor.setVelocityX(0);
+    // }
 
-    if (this.cursors?.down.isDown) {
-      this.cstr.angleA++;
-    }
+    // if (this.cursors?.down.isDown) {
+    //   //
+    // }
     //   }
     // }
 
