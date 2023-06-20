@@ -41,6 +41,6 @@
     ]
   },
   "devDependencies": {
-    "phaser": "^3.60.0"
+    "phaser": "3.55"
   }
 }

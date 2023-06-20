@@ -10,9 +10,9 @@ const cfg = {
     backgroundColor: '#dddddd',
     scene: [MyScene],
     physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 400 },
+        default: 'matter',
+        matter: {
+            gravity: { y: 1 },
             debug: true,
         }
     }
