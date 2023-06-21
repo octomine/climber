@@ -17,7 +17,9 @@ export class MyScene extends Phaser.Scene {
   private lastDown!: string;
 
   private handlers!: Phaser.Physics.Arcade.Group;
+  private handler!: Phaser.Physics.Matter.Image;
   private hanging: boolean = false;
+  private count: number = 0;
   private grabbed!: { x: number, y: number };
 
   constructor() {
@@ -50,6 +52,21 @@ export class MyScene extends Phaser.Scene {
       this.matter.world.convertTilemapLayer(layer);
     }
 
+    this.handler = this.matter.add.image(200, 300, 'handler', 0, {
+      ignoreGravity: true,
+      isSensor: true,
+    });
+
+
+    // this.handlers = this.physics.add.group({
+    //   key: 'handler',
+    //   quantity: 2,
+    //   setXY: { x: 200, y: 300 },
+    //   "setXY.stepX": 150,
+    //   "setXY.stepY": -100,
+    //   allowGravity: false,
+    // });
+
     this.MP = new Phaser.Physics.Matter.MatterPhysics(this);
 
     const { bodies, body } = this.MP;
@@ -63,15 +80,6 @@ export class MyScene extends Phaser.Scene {
     this.actor = this.matter.add.sprite(0, 0, 'penta');
     this.actor.setExistingBody(finalBody);
     this.actor.setFixedRotation().setPosition(200, 100);
-
-    // this.handlers = this.physics.add.group({
-    //   key: 'handler',
-    //   quantity: 2,
-    //   setXY: { x: 200, y: 300 },
-    //   "setXY.stepX": 150,
-    //   "setXY.stepY": -100,
-    //   allowGravity: false,
-    // });
 
     // // actor
     // this.actor = this.physics.add.sprite(200, 100, 'penta');
@@ -88,7 +96,7 @@ export class MyScene extends Phaser.Scene {
     //   this.physics.add.collider(this.actor, layer);
     // }
 
-    // this.cursors = this.input.keyboard?.createCursorKeys();
+    this.cursors = this.input.keyboard?.createCursorKeys();
 
     // // KEYBOARD
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
@@ -96,11 +104,13 @@ export class MyScene extends Phaser.Scene {
       if (!repeat && ['ArrowRight', 'ArrowLeft'].includes(code)) {
         const grabber = code === 'ArrowRight' ? this.grabberRight : this.grabberLeft;
         const { x, y } = grabber.position;
+        this.MP.overlap(grabber, [this.handler.body as BodyType], (a, b) => {
+          console.log((b as Phaser.Types.Physics.Arcade.GameObjectWithBody));
+        })
         this.rotationPoint = new Phaser.Math.Vector2(x, y);
         this.rotationDirection = code == 'ArrowRight' ? 1 : -1;
-        // if (code === 'ArrowRight') {
-        //   this.actor.rotation += Math.PI * (this.lastDown === 'ArrowLeft' ? -1 : 1);
-        // }
+
+        this.count = 0;
         this.hanging = true;
         this.lastDown = code;
         //     this.physics.overlap(this.leftGrabber, this.handlers, (grabber, handler) => {
@@ -121,6 +131,14 @@ export class MyScene extends Phaser.Scene {
     this.input.keyboard?.on('keyup', (e: KeyboardEvent) => {
       const { code } = e;
       if (this.lastDown === code && ['ArrowRight', 'ArrowLeft'].includes(code)) {
+        if (this.cursors?.left.isUp && this.cursors.right.isUp) {
+          const a = this.actor.rotation - Math.PI / 2;
+          const p = this.count / 25;
+          const vx = Math.cos(a) * p;
+          const vy = Math.sin(a) * p;
+          this.actor.setVelocityX(vx);
+          this.actor.setVelocityY(vy);
+        }
         //     if (this.hanging) {
         //       if (this.cursors?.up.isDown) {
         //         this.actor.setVelocityY(-300);
@@ -132,6 +150,7 @@ export class MyScene extends Phaser.Scene {
         //         this.actor.setVelocityX(-100);
         //       }
         //     }
+
         this.hanging = false;
       }
     });
@@ -146,6 +165,7 @@ export class MyScene extends Phaser.Scene {
       const newX = x - r * Math.cos(this.actor.rotation) * this.rotationDirection;
       const newY = y - r * Math.sin(this.actor.rotation) * this.rotationDirection;
       this.actor.setPosition(newX, newY);
+      this.count++;
       // hanging
       //   this.actor.setPosition(this.grabbed.x, this.grabbed.y);
       //   this.actor.setVelocityY(0);
