@@ -19,6 +19,7 @@ export class MyScene extends Phaser.Scene {
     this.load.image('tile', 'assets/image/tile.png');
     this.load.image('handler', 'assets/image/handler.png')
     this.load.image('penta', 'assets/image/img.png');
+    this.load.image('empty', 'assets/image/empty.png');
   }
 
   create() {
@@ -48,13 +49,16 @@ export class MyScene extends Phaser.Scene {
 
     // actor
     this.actor = this.physics.add.sprite(200, 100, 'penta');
-    this.grabberOffset = this.actor.width / 3;
+    const { width, height } = this.actor;
+    this.actor.body.setCircle((width + height) / 4);
+    this.grabberOffset = width / 2;
 
-    this.leftGrabber = this.physics.add.image(0, 0, '');
-    this.leftGrabber.body.setCircle(20);
+    const grabberR = 20;
+    this.leftGrabber = this.physics.add.image(0, 0, 'empty');
+    this.leftGrabber.body.setCircle(grabberR, -grabberR, -grabberR);// * grabberR, -grabberR, -grabberR);
     this.leftGrabber.body.setAllowGravity(false);
-    this.rightGrabber = this.physics.add.image(0, 0, '');
-    this.rightGrabber.body.setCircle(20);
+    this.rightGrabber = this.physics.add.image(0, 0, 'empty');
+    this.rightGrabber.body.setCircle(grabberR, -grabberR, -grabberR);
     this.rightGrabber.body.setAllowGravity(false);
 
     if (layer) {
@@ -68,12 +72,6 @@ export class MyScene extends Phaser.Scene {
       if (e.code === 'Space') {
         this.physics.overlap(this.leftGrabber, this.handlers, (grabber, handler) => {
           const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
-          const { x: grabberX, y: grabberY } = (grabber as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
-          const originX = ((this.actor.width / 2) - (this.actor.x - grabberX)) / this.actor.width;
-          const originY = ((this.actor.height / 2) - (this.actor.y - grabberY)) / this.actor.height;
-          // this.actor.setOrigin(originX, originY);
-          this.actor.x = handlerX;
-          this.actor.y = handlerY;
           this.actor.setVelocity(0);
           this.grabbed = { x: handlerX, y: handlerY };
           this.hanging = true;
@@ -98,18 +96,18 @@ export class MyScene extends Phaser.Scene {
         this.hanging = false;
       }
     });
-
-    const test = this.physics.
   }
 
   update() {
     if (this.hanging) {
       // hanging
-      this.actor.setPosition(this.grabbed.x, this.grabbed.y);
       this.actor.setVelocityY(0);
-      this.actor.setRotation(1)
-      // this.actor.angle++;
-      this.actor.refreshBody();
+      const a = this.actor.rotation + .05;
+      this.actor.rotation = a;
+      const x = this.grabbed.x - Math.cos(a) * this.grabberOffset;
+      const y = this.grabbed.y - Math.sin(a) * this.grabberOffset;
+
+      this.actor.setPosition(x, y);
     } else {
       // jump
       if (this.cursors?.up.isDown) {
@@ -132,9 +130,11 @@ export class MyScene extends Phaser.Scene {
 
     // TODO: допилить вращение
     const v = this.actor.body.velocity;
-    this.leftGrabber.setPosition(this.actor.x - this.grabberOffset, this.actor.y);
+    const offsetX = Math.cos(this.actor.rotation) * this.grabberOffset;
+    const offsetY = Math.sin(this.actor.rotation) * this.grabberOffset;
+    this.leftGrabber.setPosition(this.actor.x - offsetX, this.actor.y - offsetY);
     this.leftGrabber.body.velocity.copy(v);
-    this.rightGrabber.setPosition(this.actor.x + this.grabberOffset, this.actor.y);
+    this.rightGrabber.setPosition(this.actor.x + offsetX, this.actor.y + offsetY);
     this.rightGrabber.body.velocity.copy(v);
   }
 }
