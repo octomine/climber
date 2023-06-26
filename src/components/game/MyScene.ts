@@ -1,3 +1,5 @@
+import { IncomingMessage } from "http";
+
 export class MyScene extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
@@ -5,11 +7,16 @@ export class MyScene extends Phaser.Scene {
   private actor!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private leftGrabber!: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
   private rightGrabber!: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
-  private grabberOffset: number = 0;
+  private grabberOffset = 0;
+  private rotationDirection = 1;
 
   private handlers!: Phaser.Physics.Arcade.Group;
-  private hanging: boolean = false;
-  private grabbed!: { x: number, y: number };
+  private hanging = false;
+  private grabbed!: { x: number, y: number } | null;
+  private lastPressed = '';
+
+  private walk = 200;
+  private jump = 400;
 
   constructor() {
     super('main');
@@ -38,14 +45,18 @@ export class MyScene extends Phaser.Scene {
 
     this.map.setCollision(0);
 
-    this.handlers = this.physics.add.group({
-      key: 'handler',
-      quantity: 2,
-      setXY: { x: 200, y: 300 },
-      "setXY.stepX": 150,
-      "setXY.stepY": -100,
-      allowGravity: false,
-    });
+    const arr = new Array(6).fill(null);
+    const r = 100;
+    const xc = 300;
+    const yc = 300;
+    this.handlers = this.physics.add.group(
+      arr.map((_, i) => {
+        const a = i * Math.PI / 3;
+        const x = xc + r * Math.cos(a);
+        const y = yc + r * Math.sin(a);
+        return this.physics.add.image(x, y, 'handler');
+      }));
+    this.handlers.children.each((child) => { (child.body as Phaser.Physics.Arcade.Body).setAllowGravity(false) })
 
     // actor
     this.actor = this.physics.add.sprite(200, 100, 'penta');
@@ -69,31 +80,38 @@ export class MyScene extends Phaser.Scene {
 
     // KEYBOARD
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
-        this.physics.overlap(this.leftGrabber, this.handlers, (grabber, handler) => {
-          const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
-          this.actor.setVelocity(0);
-          this.grabbed = { x: handlerX, y: handlerY };
-          this.hanging = true;
-        })
+      const { code, repeat } = e;
+      if (!this.actor.body.onFloor()) {
+        if (!repeat && ['ArrowLeft', 'ArrowRight'].includes(e.code)) {
+          const grabber = code === 'ArrowLeft' ? this.leftGrabber : this.rightGrabber;
+          if (!this.physics.overlap(grabber, this.handlers, (_, handler) => {
+            const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
+            this.actor.setVelocity(0);
+            this.grabbed = { x: handlerX, y: handlerY };
+            this.hanging = true;
+            this.rotationDirection = code === 'ArrowLeft' ? 1 : -1;
+          })) {
+            this.grabbed = null;
+          }
+        }
       }
+      this.lastPressed = code;
     });
 
     this.input.keyboard?.on('keyup', (e: KeyboardEvent) => {
       const { code } = e;
-      if (code === 'Space') {
-        if (this.hanging) {
-          if (this.cursors?.up.isDown) {
-            this.actor.setVelocityY(-300);
+      if (!this.actor.body.onFloor()) {
+        if (this.lastPressed === code && ['ArrowLeft', 'ArrowRight'].includes(code)) {
+          if (this.hanging) {
+            const a = this.actor.rotation - Math.PI / 2;
+            const v = this.jump;
+            const vx = Math.cos(a) * v;
+            const vy = Math.sin(a) * v;
+            this.actor.setVelocityX(vx);
+            this.actor.setVelocityY(vy);
           }
-          if (this.cursors?.right.isDown) {
-            this.actor.setVelocityX(100);
-          }
-          if (this.cursors?.left.isDown) {
-            this.actor.setVelocityX(-100);
-          }
+          this.hanging = false;
         }
-        this.hanging = false;
       }
     });
   }
@@ -101,34 +119,35 @@ export class MyScene extends Phaser.Scene {
   update() {
     if (this.hanging) {
       // hanging
-      this.actor.setVelocityY(0);
-      const a = this.actor.rotation + .05;
-      this.actor.rotation = a;
-      const x = this.grabbed.x - Math.cos(a) * this.grabberOffset;
-      const y = this.grabbed.y - Math.sin(a) * this.grabberOffset;
+      if (this.grabbed) {
+        this.actor.setVelocityY(0);
+        const a = this.actor.rotation - .05 * this.rotationDirection;
+        this.actor.rotation = a;
+        const x = this.grabbed.x + Math.cos(a) * this.grabberOffset * this.rotationDirection;
+        const y = this.grabbed.y + Math.sin(a) * this.grabberOffset * this.rotationDirection;
 
-      this.actor.setPosition(x, y);
-    } else {
-      // jump
-      if (this.cursors?.up.isDown) {
-        if (this.actor.body.onFloor()) {
-          this.actor.setVelocityY(-300);
-        }
+        this.actor.setPosition(x, y);
+      } else {
+        this.hanging = false;
       }
-
-      // walk
+    } else {
       if (this.actor.body.onFloor()) {
+        // jump
+        if (this.cursors?.up.isDown) {
+          this.actor.setVelocityY(-this.jump);
+        }
+
+        // walk
         if (this.cursors?.right.isDown) {
-          this.actor.setVelocityX(100);
+          this.actor.setVelocityX(this.walk);
         } else if (this.cursors?.left.isDown) {
-          this.actor.setVelocityX(-100);
+          this.actor.setVelocityX(-this.walk);
         } else {
           this.actor.setVelocityX(0);
         }
       }
     }
 
-    // TODO: допилить вращение
     const v = this.actor.body.velocity;
     const offsetX = Math.cos(this.actor.rotation) * this.grabberOffset;
     const offsetY = Math.sin(this.actor.rotation) * this.grabberOffset;
