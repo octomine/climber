@@ -24,6 +24,7 @@ export class MyScene extends Phaser.Scene {
     this.load.image('tile', 'assets/image/tile.png');
     this.load.image('handler', 'assets/image/handler.png');
     this.load.image('penta', 'assets/image/img.png');
+    this.load.image('hand', 'assets/image/hand.png');
     this.load.image('empty', 'assets/image/empty.png');
   }
 
@@ -43,16 +44,16 @@ export class MyScene extends Phaser.Scene {
 
     this.map.setCollision(0);
 
-    const arr = new Array(6).fill(null);
+    const arr = new Array(7).fill(null);
     const r = 100;
     const xc = 300;
-    const yc = 300;
+    const yc = 250;
     this.handlers = this.physics.add.group(
       arr.map((_, i) => {
-        const a = i * Math.PI / 3;
+        const a = (i % 2 === 0 ? .2 : 0) + i * Math.PI / 3;
         const x = xc + r * Math.cos(a);
         const y = yc + r * Math.sin(a);
-        return this.physics.add.image(x, y, 'handler');
+        return this.physics.add.image(i === 6 ? xc : x, i === 6 ? yc : y, 'handler');
       }));
     this.handlers.children.each((child) => {
       (child.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
@@ -66,11 +67,12 @@ export class MyScene extends Phaser.Scene {
     this.grabberOffset = width / 2;
 
     const grabberR = 20;
-    this.leftGrabber = this.physics.add.image(0, 0, 'empty');
-    this.leftGrabber.body.setCircle(grabberR, -grabberR, -grabberR);
+    this.leftGrabber = this.physics.add.image(0, 0, 'hand');
+    this.leftGrabber.body.setCircle(grabberR, -grabberR / 2, -grabberR / 2);
     this.leftGrabber.body.setAllowGravity(false);
-    this.rightGrabber = this.physics.add.image(0, 0, 'empty');
-    this.rightGrabber.body.setCircle(grabberR, -grabberR, -grabberR);
+    this.leftGrabber.flipX = true;
+    this.rightGrabber = this.physics.add.image(0, 0, 'hand');
+    this.rightGrabber.body.setCircle(grabberR, -grabberR / 2, -grabberR / 2);
     this.rightGrabber.body.setAllowGravity(false);
 
     if (layer) {
@@ -118,6 +120,7 @@ export class MyScene extends Phaser.Scene {
   }
 
   update() {
+    this.grabberOffset = this.actor.width / 2;
     if (this.hanging) {
       // hanging
       if (this.grabbed) {
@@ -133,7 +136,9 @@ export class MyScene extends Phaser.Scene {
       }
     } else {
       if (this.actor.body.onFloor()) {
+        this.actor.rotation = 0;
         // jump
+        this.grabberOffset = -this.actor.width / 4;
         if (this.cursors?.up.isDown) {
           this.actor.setVelocityY(-this.jump);
         }
@@ -146,6 +151,8 @@ export class MyScene extends Phaser.Scene {
         } else {
           this.actor.setVelocityX(0);
         }
+      } else {
+        this.actor.rotation *= .97;
       }
     }
 
@@ -153,8 +160,10 @@ export class MyScene extends Phaser.Scene {
     const offsetX = Math.cos(this.actor.rotation) * this.grabberOffset;
     const offsetY = Math.sin(this.actor.rotation) * this.grabberOffset;
     this.leftGrabber.setPosition(this.actor.x - offsetX, this.actor.y - offsetY);
+    this.leftGrabber.setRotation(this.actor.rotation);
     this.leftGrabber.body.velocity.copy(v);
     this.rightGrabber.setPosition(this.actor.x + offsetX, this.actor.y + offsetY);
+    this.rightGrabber.setRotation(this.actor.rotation);
     this.rightGrabber.body.velocity.copy(v);
   }
 }
