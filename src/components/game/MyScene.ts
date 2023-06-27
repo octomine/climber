@@ -1,5 +1,3 @@
-import { IncomingMessage } from "http";
-
 export class MyScene extends Phaser.Scene {
   private map!: Phaser.Tilemaps.Tilemap;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
@@ -24,7 +22,7 @@ export class MyScene extends Phaser.Scene {
 
   preload() {
     this.load.image('tile', 'assets/image/tile.png');
-    this.load.image('handler', 'assets/image/handler.png')
+    this.load.image('handler', 'assets/image/handler.png');
     this.load.image('penta', 'assets/image/img.png');
     this.load.image('empty', 'assets/image/empty.png');
   }
@@ -56,7 +54,10 @@ export class MyScene extends Phaser.Scene {
         const y = yc + r * Math.sin(a);
         return this.physics.add.image(x, y, 'handler');
       }));
-    this.handlers.children.each((child) => { (child.body as Phaser.Physics.Arcade.Body).setAllowGravity(false) })
+    this.handlers.children.each((child) => {
+      (child.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
+      (child.body as Phaser.Physics.Arcade.Body).setCircle(18);
+    })
 
     // actor
     this.actor = this.physics.add.sprite(200, 100, 'penta');
@@ -66,7 +67,7 @@ export class MyScene extends Phaser.Scene {
 
     const grabberR = 20;
     this.leftGrabber = this.physics.add.image(0, 0, 'empty');
-    this.leftGrabber.body.setCircle(grabberR, -grabberR, -grabberR);// * grabberR, -grabberR, -grabberR);
+    this.leftGrabber.body.setCircle(grabberR, -grabberR, -grabberR);
     this.leftGrabber.body.setAllowGravity(false);
     this.rightGrabber = this.physics.add.image(0, 0, 'empty');
     this.rightGrabber.body.setCircle(grabberR, -grabberR, -grabberR);
