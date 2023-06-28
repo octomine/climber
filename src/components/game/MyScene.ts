@@ -12,6 +12,7 @@ export class MyScene extends Phaser.Scene {
   private hanging = false;
   private grabbed!: { x: number, y: number } | null;
   private lastPressed = '';
+  private fall = false;
 
   private walk = 200;
   private jump = 400;
@@ -95,6 +96,7 @@ export class MyScene extends Phaser.Scene {
             this.rotationDirection = code === 'ArrowLeft' ? 1 : -1;
           })) {
             this.grabbed = null;
+            this.fall = true;
           }
         }
       }
@@ -137,6 +139,7 @@ export class MyScene extends Phaser.Scene {
     } else {
       if (this.actor.body.onFloor()) {
         this.actor.rotation = 0;
+        this.fall = false;
         // jump
         this.grabberOffset = -this.actor.width / 4;
         if (this.cursors?.up.isDown) {
@@ -152,7 +155,14 @@ export class MyScene extends Phaser.Scene {
           this.actor.setVelocityX(0);
         }
       } else {
-        this.actor.rotation *= .97;
+        if (this.fall) {
+          this.actor.rotation *= .97;
+        } else {
+          const { x, y } = this.actor.body.velocity;
+          const s = Math.sign(x);
+          const a = Math.atan(y / x) + (s === 0 ? 1 : s) * Math.PI / 2;
+          this.actor.rotation = Number.isNaN(a) ? 0 : a;
+        }
       }
     }
 
