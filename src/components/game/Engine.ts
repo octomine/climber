@@ -19,3 +19,5 @@ const cfg = {
 }
 
 const game = new Phaser.Game(cfg);
+const sm = new Phaser.Scale.ScaleManager(game);
+sm.lockOrientation('portrait');
