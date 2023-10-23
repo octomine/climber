@@ -1,4 +1,10 @@
 export class MyScene extends Phaser.Scene {
+  GAME_WIDTH = 640;
+  GAME_HEIGHT = 980;
+
+  parent!: Phaser.Structs.Size;
+  sizer!: Phaser.Structs.Size;
+
   private map!: Phaser.Tilemaps.Tilemap;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
 
@@ -34,6 +40,19 @@ export class MyScene extends Phaser.Scene {
   }
 
   create() {
+    const width = this.scale.gameSize.width;
+    const height = this.scale.gameSize.height;
+
+    this.parent = new Phaser.Structs.Size(width, height);
+    this.sizer = new Phaser.Structs.Size(this.GAME_WIDTH, this.GAME_HEIGHT, Phaser.Structs.Size.FIT, this.parent);
+
+    this.parent.setSize(width, height);
+    this.sizer.setSize(width, height);
+
+    this.updateCamera();
+
+    this.scale.on('resize', this.resize, this);
+
     const data = [
       [0, -1, -1, -1, -1, -1, -1, 0],
       [0, -1, -1, -1, -1, -1, -1, 0],
@@ -67,9 +86,9 @@ export class MyScene extends Phaser.Scene {
 
     // actor
     this.actor = this.physics.add.sprite(200, 100, 'penta');
-    const { width, height } = this.actor;
-    this.actor.body.setCircle((width + height) / 4);
-    this.grabberOffset = width / 2;
+    const { width: actorWidth, height: actorHeight } = this.actor;
+    this.actor.body.setCircle((actorWidth + actorHeight) / 4);
+    this.grabberOffset = actorWidth / 2;
 
     const grabberR = 20;
     this.leftGrabber = this.physics.add.image(0, 0, 'hand');
@@ -141,14 +160,34 @@ export class MyScene extends Phaser.Scene {
 
     // MOUSE
     this.input.on('pointerdown', (e: Phaser.Input.Pointer) => {
-      const code = e.downX > window.innerWidth / 2 ? 'ArrowRight' : 'ArrowLeft';
+      const code = e.downX > this.sizer.width / 2 ? 'ArrowRight' : 'ArrowLeft';
       onDown(code);
     });
 
     this.input.on('pointerup', (e: Phaser.Input.Pointer) => {
-      const code = e.downX > window.innerWidth / 2 ? 'ArrowRight' : 'ArrowLeft';
+      const code = e.downX > this.sizer.width / 2 ? 'ArrowRight' : 'ArrowLeft';
       onUp(code);
     })
+  }
+
+  resize({ width, height }: { width: number, height: number }) {
+    this.parent.setSize(width, height);
+    this.sizer.setSize(width, height);
+
+    this.updateCamera();
+  }
+
+  updateCamera() {
+    const camera = this.cameras.main;
+
+    const x = Math.ceil((this.parent.width - this.sizer.width) / 2);
+    const y = 0;
+    const scaleX = this.sizer.width / this.GAME_WIDTH;
+    const scaleY = this.sizer.height / this.GAME_HEIGHT;
+
+    camera.setViewport(x, y, this.sizer.width, this.sizer.height);
+    camera.setZoom(scaleX, scaleY);
+    camera.centerOn(this.GAME_WIDTH / 2, this.GAME_HEIGHT / 2);
   }
 
   update() {
@@ -177,7 +216,9 @@ export class MyScene extends Phaser.Scene {
         }
 
         // walk
-        if (this.isDown.ArrowRight) {
+        if (this.isDown.ArrowRight && this.isDown.ArrowLeft) {
+          this.actor.setVelocityX(0);
+        } else if (this.isDown.ArrowRight) {
           this.actor.setVelocityX(this.walk);
         } else if (this.isDown.ArrowLeft) {
           this.actor.setVelocityX(-this.walk);
