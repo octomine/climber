@@ -4,8 +4,8 @@ import { MyScene } from './MyScene';
 const cfg = {
     type: Phaser.AUTO,
     title: 'game',
-    width: 800,
-    height: 600,
+    width: 400,
+    height: 400,
     parent: 'game',
     backgroundColor: '#dddddd',
     scene: [MyScene],
@@ -19,5 +19,3 @@ const cfg = {
 }
 
 const game = new Phaser.Game(cfg);
-const sm = new Phaser.Scale.ScaleManager(game);
-sm.lockOrientation('portrait');

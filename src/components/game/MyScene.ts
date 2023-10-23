@@ -84,10 +84,14 @@ export class MyScene extends Phaser.Scene {
       this.physics.add.collider(this.actor, layer);
     }
 
+    // camera
+    this.cameras.main.setBounds(0, 0, 800, 600).setName('main');
+    this.cameras.main.startFollow(this.actor, false, .2, .2);
+
+    // ---
     this.cursors = this.input.keyboard?.createCursorKeys();
 
     const onDown = (code: string, repeat = false) => {
-      console.log(code);
       this.isDown[code] = true;
       if (!this.actor.body.onFloor()) {
         if (!repeat && ['ArrowLeft', 'ArrowRight'].includes(code)) {
