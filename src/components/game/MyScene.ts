@@ -164,7 +164,9 @@ export class MyScene extends Phaser.Scene {
       onUp(code);
     });
 
-    // MOUSE
+    // TOUCH
+    this.input.addPointer(9);
+
     this.input.on('pointerdown', (e: Phaser.Input.Pointer) => {
       const code = e.downX > this.sizer.width / 2 ? 'ArrowRight' : 'ArrowLeft';
       onDown(code);
