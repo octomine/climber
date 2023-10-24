@@ -104,7 +104,7 @@ export class MyScene extends Phaser.Scene {
     }
 
     // camera
-    this.cameras.main.setBounds(0, 0, 800, 600).setName('main');
+    this.cameras.main.setBounds(0, 0, this.GAME_WIDTH, this.GAME_HEIGHT).setName('main');
     this.cameras.main.startFollow(this.actor, false, .2, .2);
 
     // ---
@@ -143,6 +143,12 @@ export class MyScene extends Phaser.Scene {
             this.actor.setVelocityY(vy);
           }
           this.hanging = false;
+        }
+      } else {
+        if (this.isDown.ArrowLeft || this.isDown.ArrowRight) {
+          const vx = this.isDown.ArrowRight ? this.walk : -this.walk;
+          this.actor.setVelocityX(vx);
+          this.actor.setVelocityY(-this.jump);
         }
       }
     }
@@ -209,11 +215,7 @@ export class MyScene extends Phaser.Scene {
       if (this.actor.body.onFloor()) {
         this.actor.rotation = 0;
         this.fall = false;
-        // jump
         this.grabberOffset = -this.actor.width / 4;
-        if (this.cursors?.up.isDown) {
-          this.actor.setVelocityY(-this.jump);
-        }
 
         // walk
         if (this.isDown.ArrowRight && this.isDown.ArrowLeft) {
