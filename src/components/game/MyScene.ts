@@ -104,7 +104,7 @@ export class MyScene extends Phaser.Scene {
     }
 
     // camera
-    this.cameras.main.setBounds(0, 0, this.GAME_WIDTH, this.GAME_HEIGHT).setName('main');
+    this.cameras.main.setBounds(0, 0, 800, 600).setName('main');
     this.cameras.main.startFollow(this.actor, false, .2, .2);
 
     // ---
