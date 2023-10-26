@@ -6,7 +6,6 @@ export class MyScene extends Phaser.Scene {
   sizer!: Phaser.Structs.Size;
 
   private map!: Phaser.Tilemaps.Tilemap;
-  private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined;
 
   private actor!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   private leftGrabber!: Phaser.Types.Physics.Arcade.ImageWithDynamicBody;
@@ -59,10 +58,16 @@ export class MyScene extends Phaser.Scene {
       [0, -1, -1, -1, -1, 0, 0, 0],
       [0, -1, -1, -1, -1, -1, -1, 0],
       [0, -1, -1, -1, -1, -1, -1, 0],
+      [0, -1, -1, -1, -1, -1, -1, 0],
+      [0, -1, -1, -1, -1, -1, -1, 0],
+      [0, -1, -1, -1, -1, -1, -1, 0],
+      [0, 0, -1, -1, -1, -1, -1, 0],
+      [0, -1, -1, 0, -1, -1, -1, 0],
+      [0, -1, -1, -1, -1, -1, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
-    this.map = this.make.tilemap({ data, tileWidth: 100, tileHeight: 100, width: 8, height: 6 });
+    this.map = this.make.tilemap({ data, tileWidth: 100, tileHeight: 100, width: 8, height: 12 });
     this.map.addTilesetImage('tile');
     const layer = this.map.createLayer(0, 'tile', 0, 0);
 
@@ -104,11 +109,8 @@ export class MyScene extends Phaser.Scene {
     }
 
     // camera
-    this.cameras.main.setBounds(0, 0, 800, 600).setName('main');
+    this.cameras.main.setBounds(0, 0, 800, 1600).setName('main');
     this.cameras.main.startFollow(this.actor, false, .2, .2);
-
-    // ---
-    this.cursors = this.input.keyboard?.createCursorKeys();
 
     const onDown = (code: string, repeat = false) => {
       this.isDown[code] = true;
