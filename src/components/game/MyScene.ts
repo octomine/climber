@@ -1,6 +1,7 @@
 export class MyScene extends Phaser.Scene {
   GAME_WIDTH = 640;
   GAME_HEIGHT = 980;
+  CODES = ['ArrowLeft', 'ArrowRight'];
 
   parent!: Phaser.Structs.Size;
   sizer!: Phaser.Structs.Size;
@@ -21,6 +22,10 @@ export class MyScene extends Phaser.Scene {
   }
   private grabbed!: { x: number, y: number } | null;
   private lastPressed = '';
+  private lastReleased = {
+    code: '',
+    time: 0
+  }
   private fall = false;
 
   private walk = 200;
@@ -115,7 +120,7 @@ export class MyScene extends Phaser.Scene {
     const onDown = (code: string, repeat = false) => {
       this.isDown[code] = true;
       if (!this.actor.body.onFloor()) {
-        if (!repeat && ['ArrowLeft', 'ArrowRight'].includes(code)) {
+        if (!repeat && this.CODES.includes(code)) {
           const grabber = code === 'ArrowLeft' ? this.leftGrabber : this.rightGrabber;
           if (!this.physics.overlap(grabber, this.handlers, (_, handler) => {
             const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
@@ -135,7 +140,7 @@ export class MyScene extends Phaser.Scene {
     const onUp = (code: string) => {
       this.isDown[code] = false;
       if (!this.actor.body.onFloor()) {
-        if (this.lastPressed === code && ['ArrowLeft', 'ArrowRight'].includes(code)) {
+        if (this.lastPressed === code && this.CODES.includes(code)) {
           if (this.hanging) {
             const a = this.actor.rotation - Math.PI / 2;
             const v = this.jump;
@@ -158,12 +163,16 @@ export class MyScene extends Phaser.Scene {
     // KEYBOARD
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
       const { code, repeat } = e;
-      onDown(code, repeat);
+      if (this.CODES.includes(code)) {
+        onDown(code, repeat);
+      }
     });
 
     this.input.keyboard?.on('keyup', (e: KeyboardEvent) => {
       const { code } = e;
-      onUp(code);
+      if (this.CODES.includes(code)) {
+        onUp(code);
+      }
     });
 
     // TOUCH
