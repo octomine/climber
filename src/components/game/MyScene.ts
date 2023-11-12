@@ -2,6 +2,7 @@ export class MyScene extends Phaser.Scene {
   GAME_WIDTH = 640;
   GAME_HEIGHT = 980;
   CODES = ['ArrowLeft', 'ArrowRight'];
+  RELEASE_DELAY = 50;
 
   parent!: Phaser.Structs.Size;
   sizer!: Phaser.Structs.Size;
@@ -138,7 +139,6 @@ export class MyScene extends Phaser.Scene {
     }
 
     const onUp = (code: string) => {
-      console.log(code);
       if (this.lastReleased !== code) {
         this.releasedDelay = new Date().getTime() - this.lastReleasedTime;
         this.lastReleasedTime = new Date().getTime();
@@ -146,9 +146,8 @@ export class MyScene extends Phaser.Scene {
       this.isDown[code] = false;
 
       switch (true) {
-        case !this.isDown.ArrowLeft && !this.isDown.ArrowRight && this.bothPressed:
-          processAction('BOTH!!1');
-          console.log(this.releasedDelay);
+        case !this.isDown.ArrowLeft && !this.isDown.ArrowRight && this.bothPressed && this.releasedDelay < this.RELEASE_DELAY:
+          processAction('JUMP');
           this.bothPressed = false;
           break;
         case this.isDown.ArrowLeft:
@@ -172,16 +171,6 @@ export class MyScene extends Phaser.Scene {
           }
           this.hanging = false;
         }
-        if (!this.isDown.ArrowLeft && !this.isDown.ArrowRight) {
-          console.log('here!!1');
-          this.actor.setVelocityX(0);
-        }
-      } else {
-        if (this.isDown.ArrowLeft || this.isDown.ArrowRight) {
-          const vx = this.isDown.ArrowRight ? this.walk : -this.walk;
-          this.actor.setVelocityX(vx);
-          this.actor.setVelocityY(-this.jump);
-        }
       }
 
       this.lastReleased = code;
@@ -189,7 +178,9 @@ export class MyScene extends Phaser.Scene {
     }
 
     const processAction = (type: string) => {
-      console.log(type);
+      if (this.actor.body.onFloor() && type === 'JUMP') {
+        this.actor.setVelocityY(-this.jump);
+      }
     }
 
     // KEYBOARD
