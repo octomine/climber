@@ -22,10 +22,10 @@ export class MyScene extends Phaser.Scene {
   }
   private grabbed!: { x: number, y: number } | null;
   private lastPressed = '';
-  private lastReleased = {
-    code: '',
-    time: 0
-  }
+  private bothPressed = false;
+  private lastReleased = '';
+  private lastReleasedTime = 0;
+  private releasedDelay = -1;
   private fall = false;
 
   private walk = 200;
@@ -63,12 +63,6 @@ export class MyScene extends Phaser.Scene {
       [0, -1, -1, -1, -1, 0, 0, 0],
       [0, -1, -1, -1, -1, -1, -1, 0],
       [0, -1, -1, -1, -1, -1, -1, 0],
-      [0, -1, -1, -1, -1, -1, -1, 0],
-      [0, -1, -1, -1, -1, -1, -1, 0],
-      [0, -1, -1, -1, -1, -1, -1, 0],
-      [0, 0, -1, -1, -1, -1, -1, 0],
-      [0, -1, -1, 0, -1, -1, -1, 0],
-      [0, -1, -1, -1, -1, -1, 0, 0],
       [0, 0, 0, 0, 0, 0, 0, 0]
     ];
 
@@ -119,6 +113,11 @@ export class MyScene extends Phaser.Scene {
 
     const onDown = (code: string, repeat = false) => {
       this.isDown[code] = true;
+
+      if (this.isDown.ArrowLeft && this.isDown.ArrowRight) {
+        this.bothPressed = true;
+      }
+
       if (!this.actor.body.onFloor()) {
         if (!repeat && this.CODES.includes(code)) {
           const grabber = code === 'ArrowLeft' ? this.leftGrabber : this.rightGrabber;
@@ -138,7 +137,28 @@ export class MyScene extends Phaser.Scene {
     }
 
     const onUp = (code: string) => {
+      console.log(code);
+      if (this.lastReleased !== code) {
+        this.releasedDelay = new Date().getTime() - this.lastReleasedTime;
+        this.lastReleasedTime = new Date().getTime();
+      }
       this.isDown[code] = false;
+
+      switch (true) {
+        case !this.isDown.ArrowLeft && !this.isDown.ArrowRight && this.bothPressed:
+          processAction('BOTH!!1');
+          console.log(this.releasedDelay);
+          this.bothPressed = false;
+          break;
+        case this.isDown.ArrowLeft:
+          processAction('RIGHT');
+          break;
+        case this.isDown.ArrowRight:
+          processAction('LEFT');
+          break;
+        default:
+      }
+
       if (!this.actor.body.onFloor()) {
         if (this.lastPressed === code && this.CODES.includes(code)) {
           if (this.hanging) {
@@ -151,6 +171,10 @@ export class MyScene extends Phaser.Scene {
           }
           this.hanging = false;
         }
+        if (!this.isDown.ArrowLeft && !this.isDown.ArrowRight) {
+          console.log('here!!1');
+          this.actor.setVelocityX(0);
+        }
       } else {
         if (this.isDown.ArrowLeft || this.isDown.ArrowRight) {
           const vx = this.isDown.ArrowRight ? this.walk : -this.walk;
@@ -158,6 +182,13 @@ export class MyScene extends Phaser.Scene {
           this.actor.setVelocityY(-this.jump);
         }
       }
+
+      this.lastReleased = code;
+      this.lastReleasedTime = new Date().getTime();
+    }
+
+    const processAction = (type: string) => {
+      console.log(type);
     }
 
     // KEYBOARD
