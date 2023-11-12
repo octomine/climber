@@ -83,9 +83,10 @@ export class MyScene extends Phaser.Scene {
         const y = yc + r * Math.sin(a);
         return this.physics.add.image(i === 6 ? xc : x, i === 6 ? yc : y, 'handler');
       }));
-    this.handlers.children.each((child) => {
+    this.handlers.children.iterate((child) => {
       (child.body as Phaser.Physics.Arcade.Body).setAllowGravity(false);
       (child.body as Phaser.Physics.Arcade.Body).setCircle(18);
+      return null;
     })
 
     // actor
