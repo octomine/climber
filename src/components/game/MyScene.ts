@@ -1,7 +1,7 @@
 export class MyScene extends Phaser.Scene {
   GAME_WIDTH = 640;
   GAME_HEIGHT = 980;
-  CODES = ['ArrowLeft', 'ArrowRight'];
+  CODES = ['Left', 'Right'];
   RELEASE_DELAY = 50;
 
   parent!: Phaser.Structs.Size;
@@ -18,8 +18,8 @@ export class MyScene extends Phaser.Scene {
   private handlers!: Phaser.Physics.Arcade.Group;
   private hanging = false;
   private isDown: Record<string, boolean> = {
-    'ArrowLeft': false,
-    'ArrowRight': false,
+    'Left': false,
+    'Right': false,
   }
   private grabbed!: { x: number, y: number } | null;
   private lastPressed = '';
@@ -113,22 +113,23 @@ export class MyScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, 800, 1600).setName('main');
     this.cameras.main.startFollow(this.actor, false, .2, .2);
 
+    // ---
     const onDown = (code: string, repeat = false) => {
       this.isDown[code] = true;
 
-      if (this.isDown.ArrowLeft && this.isDown.ArrowRight) {
+      if (this.isDown.Left && this.isDown.Right) {
         this.bothPressed = true;
       }
 
       if (!this.actor.body.onFloor()) {
         if (!repeat && this.CODES.includes(code)) {
-          const grabber = code === 'ArrowLeft' ? this.leftGrabber : this.rightGrabber;
+          const grabber = code === 'Left' ? this.leftGrabber : this.rightGrabber;
           if (!this.physics.overlap(grabber, this.handlers, (_, handler) => {
             const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
             this.actor.setVelocity(0);
             this.grabbed = { x: handlerX, y: handlerY };
             this.hanging = true;
-            this.rotationDirection = code === 'ArrowLeft' ? 1 : -1;
+            this.rotationDirection = code === 'Left' ? 1 : -1;
           })) {
             this.grabbed = null;
             this.fall = true;
@@ -146,14 +147,14 @@ export class MyScene extends Phaser.Scene {
       this.isDown[code] = false;
 
       switch (true) {
-        case !this.isDown.ArrowLeft && !this.isDown.ArrowRight && this.bothPressed && this.releasedDelay < this.RELEASE_DELAY:
+        case !this.isDown.Left && !this.isDown.Right && this.bothPressed && this.releasedDelay < this.RELEASE_DELAY:
           processAction('JUMP');
           this.bothPressed = false;
           break;
-        case this.isDown.ArrowLeft:
+        case this.isDown.Left:
           processAction('RIGHT');
           break;
-        case this.isDown.ArrowRight:
+        case this.isDown.Right:
           processAction('LEFT');
           break;
         default:
@@ -180,21 +181,24 @@ export class MyScene extends Phaser.Scene {
     const processAction = (type: string) => {
       if (this.actor.body.onFloor() && type === 'JUMP') {
         this.actor.setVelocityY(-this.jump);
+        this.actor.setVelocityX(0);
       }
     }
 
     // KEYBOARD
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => {
       const { code, repeat } = e;
-      if (this.CODES.includes(code)) {
-        onDown(code, repeat);
+      const reducedCode = this.CODES.reduce((prev, curr) => code.includes(curr) ? curr : prev, '');
+      if (this.CODES.includes(reducedCode)) {
+        onDown(reducedCode, repeat);
       }
     });
 
     this.input.keyboard?.on('keyup', (e: KeyboardEvent) => {
       const { code } = e;
-      if (this.CODES.includes(code)) {
-        onUp(code);
+      const reducedCode = this.CODES.reduce((prev, curr) => code.includes(curr) ? curr : prev, '');
+      if (this.CODES.includes(reducedCode)) {
+        onUp(reducedCode);
       }
     });
 
@@ -202,12 +206,12 @@ export class MyScene extends Phaser.Scene {
     this.input.addPointer(9);
 
     this.input.on('pointerdown', (e: Phaser.Input.Pointer) => {
-      const code = e.downX > this.sizer.width / 2 ? 'ArrowRight' : 'ArrowLeft';
+      const code = e.downX > this.sizer.width / 2 ? 'Right' : 'Left';
       onDown(code);
     });
 
     this.input.on('pointerup', (e: Phaser.Input.Pointer) => {
-      const code = e.downX > this.sizer.width / 2 ? 'ArrowRight' : 'ArrowLeft';
+      const code = e.downX > this.sizer.width / 2 ? 'Right' : 'Left';
       onUp(code);
     })
   }
@@ -254,11 +258,11 @@ export class MyScene extends Phaser.Scene {
         this.grabberOffset = -this.actor.width / 4;
 
         // walk
-        if (this.isDown.ArrowRight && this.isDown.ArrowLeft) {
+        if (this.isDown.Right && this.isDown.Left) {
           this.actor.setVelocityX(0);
-        } else if (this.isDown.ArrowRight) {
+        } else if (this.isDown.Right) {
           this.actor.setVelocityX(this.walk);
-        } else if (this.isDown.ArrowLeft) {
+        } else if (this.isDown.Left) {
           this.actor.setVelocityX(-this.walk);
         } else {
           this.actor.setVelocityX(0);
