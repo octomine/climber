@@ -20,8 +20,8 @@ export class MyScene extends Phaser.Scene {
   private isDown: Record<string, boolean> = {
     'Left': false,
     'Right': false,
-  }
-  private grabbed!: { x: number, y: number } | null;
+  };
+  private grabbed!: Array<{ x: number, y: number }> | null;
   private lastPressed = '';
   private bothPressed = false;
   private lastReleased = '';
@@ -127,7 +127,11 @@ export class MyScene extends Phaser.Scene {
           if (!this.physics.overlap(grabber, this.handlers, (_, handler) => {
             const { x: handlerX, y: handlerY } = (handler as Phaser.Types.Physics.Arcade.GameObjectWithBody).body.center;
             this.actor.setVelocity(0);
-            this.grabbed = { x: handlerX, y: handlerY };
+            if (this.grabbed) {
+              this.grabbed.push({ x: handlerX, y: handlerY });
+            } else {
+              this.grabbed = [{ x: handlerX, y: handlerY }];
+            }
             this.hanging = true;
             this.rotationDirection = code === 'Left' ? 1 : -1;
           })) {
@@ -171,6 +175,7 @@ export class MyScene extends Phaser.Scene {
             this.actor.setVelocityY(vy);
           }
           this.hanging = false;
+          this.grabbed = null;
         }
       }
 
@@ -219,7 +224,7 @@ export class MyScene extends Phaser.Scene {
   resize({ width, height }: { width: number, height: number }) {
     this.parent.setSize(width, height);
     this.sizer.setSize(width, height);
-
+    console.log(width);
     this.updateCamera();
   }
 
@@ -242,11 +247,17 @@ export class MyScene extends Phaser.Scene {
       // hanging
       if (this.grabbed) {
         this.actor.setVelocityY(0);
-        const a = this.actor.rotation - .05 * this.rotationDirection;
-        this.actor.rotation = a;
-        const x = this.grabbed.x + Math.cos(a) * this.grabberOffset * this.rotationDirection;
-        const y = this.grabbed.y + Math.sin(a) * this.grabberOffset * this.rotationDirection;
-
+        let x: number;
+        let y: number;
+        if (this.grabbed.length === 1) {
+          const a = this.actor.rotation - .05 * this.rotationDirection;
+          this.actor.rotation = a;
+          x = this.grabbed[0].x + Math.cos(a) * this.grabberOffset * this.rotationDirection;
+          y = this.grabbed[0].y + Math.sin(a) * this.grabberOffset * this.rotationDirection;
+        } else {
+          x = (this.grabbed[0].x + this.grabbed[1].x) / 2;
+          y = (this.grabbed[0].y + this.grabbed[1].y) / 2;
+        }
         this.actor.setPosition(x, y);
       } else {
         this.hanging = false;
