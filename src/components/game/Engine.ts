@@ -4,16 +4,19 @@ import { MyScene } from './MyScene';
 const cfg = {
     type: Phaser.AUTO,
     title: 'game',
-    width: 800,
-    height: 600,
-    parent: 'game',
+    scale: {
+        mode: Phaser.Scale.RESIZE,
+        parent: 'game',
+        width: 640,
+        height: 960,
+    },
     backgroundColor: '#dddddd',
     scene: [MyScene],
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 400 },
-            debug: true,
+            gravity: { y: 600 },
+            // debug: true,
         }
     }
 }
