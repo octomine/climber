@@ -224,7 +224,6 @@ export class MyScene extends Phaser.Scene {
   resize({ width, height }: { width: number, height: number }) {
     this.parent.setSize(width, height);
     this.sizer.setSize(width, height);
-    console.log(width);
     this.updateCamera();
   }
 
