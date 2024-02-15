@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/phas/static/css/main.073c9b0a.css",
-    "main.js": "/phas/static/js/main.f1ef5cd3.js",
-    "static/js/787.165019be.chunk.js": "/phas/static/js/787.165019be.chunk.js",
-    "index.html": "/phas/index.html",
-    "main.073c9b0a.css.map": "/phas/static/css/main.073c9b0a.css.map",
-    "main.f1ef5cd3.js.map": "/phas/static/js/main.f1ef5cd3.js.map",
-    "787.165019be.chunk.js.map": "/phas/static/js/787.165019be.chunk.js.map"
+    "main.css": "/climber/static/css/main.073c9b0a.css",
+    "main.js": "/climber/static/js/main.3a3a0fb3.js",
+    "static/js/787.165019be.chunk.js": "/climber/static/js/787.165019be.chunk.js",
+    "index.html": "/climber/index.html",
+    "main.073c9b0a.css.map": "/climber/static/css/main.073c9b0a.css.map",
+    "main.3a3a0fb3.js.map": "/climber/static/js/main.3a3a0fb3.js.map",
+    "787.165019be.chunk.js.map": "/climber/static/js/787.165019be.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.073c9b0a.css",
-    "static/js/main.f1ef5cd3.js"
+    "static/js/main.3a3a0fb3.js"
   ]
 }
